@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#12151C" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="OI Tape" />
+<title>OI Tape · NIFTY CPCR / PCR</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%2312151C'/%3E%3Crect x='96' y='150' width='130' height='240' rx='14' fill='%233FB6A8'/%3E%3Crect x='286' y='150' width='130' height='240' rx='14' fill='%23E0A24E'/%3E%3C/svg%3E" />
+<style>
+  :root{
+    --ink:#12151C; --panel:#1A1F2A; --panel2:#161B24; --line:#2A3140;
+    --text:#E8E4D8; --muted:#8A93A6; --faint:#5C6678;
+    --put:#3FB6A8; --call:#E0A24E; --up:#56C271; --down:#E5604D;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  body{padding:env(safe-area-inset-top) 12px calc(24px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto;}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 2px 10px;}
+  .wm{display:flex;align-items:center;gap:9px}
+  .glyph{width:22px;height:22px;border-radius:6px;background:
+    linear-gradient(90deg,var(--put) 0 50%,var(--call) 50% 100%);}
+  .wm b{font-size:15px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  .clock{font-size:12px;color:var(--muted)}
+  .clock .dot{display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:var(--faint);margin-right:5px;vertical-align:1px}
+  .clock.live .dot{background:var(--up);box-shadow:0 0 0 0 rgba(86,194,113,.5);animation:p 2s infinite}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(86,194,113,.45)}70%{box-shadow:0 0 0 7px rgba(86,194,113,0)}100%{box-shadow:0 0 0 0 rgba(86,194,113,0)}}
+
+  .heroes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 12px;position:relative;overflow:hidden}
+  .hero .lab{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .hero .val{font-size:40px;line-height:1.02;font-weight:700;margin-top:8px}
+  .hero .sub{font-size:11px;color:var(--faint);margin-top:6px}
+  .pill{position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;letter-spacing:.06em;
+    padding:3px 8px;border-radius:999px;text-transform:uppercase}
+  .pill.bull{background:rgba(86,194,113,.14);color:var(--up)}
+  .pill.bear{background:rgba(229,96,77,.14);color:var(--down)}
+  .pill.flat{background:rgba(138,147,166,.14);color:var(--muted)}
+  .hero.upd{animation:flash .9s ease}
+  @keyframes flash{0%{border-color:var(--up)}100%{border-color:var(--line)}}
+
+  .bar{margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+  .bar .row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:7px;letter-spacing:.04em}
+  .bal{height:12px;border-radius:7px;overflow:hidden;display:flex;background:#0d1016}
+  .bal i{display:block;height:100%}
+  .bal .pe{background:var(--put)} .bal .ce{background:var(--call)}
+  .balnum{display:flex;justify-content:space-between;margin-top:7px;font-size:11px}
+  .balnum .pe{color:var(--put)} .balnum .ce{color:var(--call)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:11px;color:var(--muted)}
+  .chip b{color:var(--text);font-weight:600}
+  .chip.warn{border-color:#5a4a22;color:var(--call)}
+
+  .spark{margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:10px 8px 6px}
+  .spark .legend{display:flex;gap:14px;font-size:11px;color:var(--muted);padding:0 6px 6px}
+  .spark .legend span{display:inline-flex;align-items:center;gap:5px}
+  .spark .legend i{width:14px;height:2px;display:inline-block;border-radius:2px}
+  svg{display:block;width:100%;height:90px}
+
+  .tablewrap{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .tablewrap .cap{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .tablewrap .cap b{font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+  .tablewrap .cap span{font-size:11px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:9px 8px;text-align:right;font-size:13px}
+  th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left;padding-left:14px}
+  td:last-child,th:last-child{padding-right:14px}
+  tbody tr{border-bottom:1px solid #20262f}
+  tbody tr:last-child{border-bottom:none}
+  td.cpcr{color:var(--text)} td.up{color:var(--up)} td.down{color:var(--down)}
+  .empty{padding:26px 14px;text-align:center;color:var(--faint);font-size:13px;line-height:1.5}
+
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  button{font:inherit;cursor:pointer;border-radius:11px;border:1px solid var(--line);
+    background:var(--panel);color:var(--text);padding:12px;font-size:13px;font-weight:600;letter-spacing:.02em}
+  button:active{transform:translateY(1px)}
+  button.ghost{background:transparent;color:var(--muted)}
+  button.prime{background:var(--text);color:var(--ink);border-color:var(--text)}
+
+  details{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r)}
+  summary{padding:13px 14px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";float:right;color:var(--faint)}
+  details[open] summary::after{content:"–"}
+  .settings{padding:0 14px 16px}
+  .fld{margin-top:12px}
+  .fld label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;letter-spacing:.04em}
+  .fld input,.fld select{width:100%;background:#0e1118;border:1px solid var(--line);color:var(--text);
+    border-radius:9px;padding:10px;font-size:13px;font-family:ui-monospace,monospace}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;padding:9px;font-size:12px}
+  .seg button.on{background:var(--text);color:var(--ink);border-color:var(--text)}
+  .hint{font-size:11px;color:var(--faint);margin-top:7px;line-height:1.5}
+  .hint a{color:var(--put)}
+  .foot{text-align:center;color:var(--faint);font-size:11px;margin-top:18px;line-height:1.6}
+  .err{color:var(--down)}
+</style>
+</head>
+<body>
+  <header>
+    <div class="wm"><div class="glyph"></div><b>OI&nbsp;Tape</b></div>
+    <div class="clock" id="clock"><span class="dot"></span><span id="clocktxt">—</span></div>
+  </header>
+
+  <div class="heroes">
+    <div class="hero" id="cpcrCard">
+      <div class="lab">CPCR · ΔOI</div>
+      <div class="val num" id="cpcrVal">—</div>
+      <div class="sub" id="cpcrSub">locked 9:30 ATM ±3</div>
+      <div class="pill flat" id="cpcrPill">wait</div>
+    </div>
+    <div class="hero" id="pcrCard">
+      <div class="lab">PCR · live</div>
+      <div class="val num" id="pcrVal">—</div>
+      <div class="sub" id="pcrSub">ATM ±3</div>
+      <div class="pill flat" id="pcrPill">wait</div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="row"><span>Put OI</span><span>Call OI · band balance</span></div>
+    <div class="bal"><i class="pe" id="balPe" style="width:50%"></i><i class="ce" id="balCe" style="width:50%"></i></div>
+    <div class="balnum num"><span class="pe" id="balPeN">—</span><span class="ce" id="balCeN">—</span></div>
+  </div>
+
+  <div class="chips" id="chips">
+    <div class="chip">Spot <b class="num" id="cSpot">—</b></div>
+    <div class="chip">Locked ATM <b class="num" id="cAtm">—</b></div>
+    <div class="chip">Expiry <b id="cExp">—</b></div>
+    <div class="chip" id="cBaseChip">Baseline <b id="cBase">—</b></div>
+  </div>
+
+  <div class="spark">
+    <div class="legend">
+      <span><i style="background:var(--put)"></i>CPCR</span>
+      <span><i style="background:var(--call)"></i>PCR</span>
+      <span style="margin-left:auto;color:var(--faint)" id="sparkRange"></span>
+    </div>
+    <svg id="svg" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div class="tablewrap">
+    <div class="cap"><b>Session tape</b><span id="rowCount">0 marks</span></div>
+    <table>
+      <thead><tr><th>Time</th><th>Spot</th><th>ATM</th><th>CPCR</th><th>PCR</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="emptyMsg">No marks yet. Data captures on every 5-minute boundary during market hours, or tap Refresh now.</div>
+  </div>
+
+  <div class="actions">
+    <button class="prime" id="btnRefresh">Refresh now</button>
+    <button id="btnLock">Lock baseline now</button>
+    <button class="ghost" id="btnCsv">Export CSV</button>
+    <button class="ghost" id="btnReset">Reset day</button>
+  </div>
+
+  <details id="cfg">
+    <summary>Settings &amp; data source</summary>
+    <div class="settings">
+      <div class="fld">
+        <label>Data source</label>
+        <div class="seg" id="srcSeg">
+          <button data-src="relay" class="on">Relay (recommended)</button>
+          <button data-src="direct">Direct Dhan</button>
+        </div>
+      </div>
+
+      <div id="relayFields">
+        <div class="fld">
+          <label>Relay URL (your Cloudflare Worker)</label>
+          <input id="relayUrl" placeholder="https://oi-relay.you.workers.dev" autocomplete="off" />
+        </div>
+        <div class="fld">
+          <label>Relay key</label>
+          <input id="relayKey" placeholder="the APP_KEY you set in the worker" autocomplete="off" />
+        </div>
+        <div class="hint">The relay holds your Dhan token as a server secret — it never touches this app or GitHub. Worker code &amp; setup are in <b>dhan-relay-worker.js</b> / <b>README.md</b>.</div>
+      </div>
+
+      <div id="directFields" style="display:none">
+        <div class="fld"><label>Dhan client ID</label><input id="dClient" autocomplete="off" /></div>
+        <div class="fld"><label>Dhan access token</label><input id="dToken" autocomplete="off" /></div>
+        <div class="hint err">Heads-up: browsers usually block direct calls to api.dhan.co (CORS). Use this only in a WebView/browser without CORS enforcement. Relay mode is the reliable path.</div>
+      </div>
+
+      <div class="fld">
+        <label>Strikes each side of ATM (±N)</label>
+        <input id="band" type="number" min="1" max="10" value="3" class="num" />
+      </div>
+      <div class="fld">
+        <label>PCR band centring</label>
+        <div class="seg" id="pcrSeg">
+          <button data-mode="live" class="on">Live ATM</button>
+          <button data-mode="locked">Locked 9:30 ATM</button>
+        </div>
+      </div>
+      <div class="hint">CPCR always uses the strike set locked at 9:30 (ΔPut OI ÷ ΔCall OI vs the 9:30 baseline). Before 9:30 it uses the 9:25, then 9:20 snapshot as a provisional reference.</div>
+      <div class="fld"><button class="prime" id="btnSave" style="width:100%">Save settings</button></div>
+      <div class="hint" id="saveMsg"></div>
+    </div>
+  </details>
+
+  <div class="foot">Personal OI monitor · not investment advice · times in IST<br><span id="status">idle</span></div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const LS="oitape.v1";
+const NIFTY_STEP_FALLBACK=50;
+
+// ---------- state ----------
+let cfg={src:"relay",relayUrl:"",relayKey:"",dClient:"",dToken:"",band:3,pcrMode:"live"};
+let day={date:"",rows:[],snaps:{},baseline:null,lockedAtm:null,lockedStrikes:null,locked:false};
+let lastPollMin="";
+
+// ---------- persistence ----------
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(LS));if(d){cfg={...cfg,...d.cfg};if(d.day&&d.day.date===istDate())day={...day,...d.day};}}catch(e){}
+}
+function save(){localStorage.setItem(LS,JSON.stringify({cfg,day}));}
+
+// ---------- IST time ----------
+function istParts(dt=new Date()){
+  const f=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",weekday:"short",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+  const p={};f.formatToParts(dt).forEach(x=>p[x.type]=x.value);
+  return {wd:p.weekday,h:+p.hour,m:+p.minute,s:+p.second,hhmm:`${p.hour}:${p.minute}`};
+}
+function istDate(){return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata"}).format(new Date());}
+function isWeekday(wd){return !["Sat","Sun"].includes(wd);}
+function marketOpen(p=istParts()){const t=p.h*60+p.m;return isWeekday(p.wd)&&t>=555&&t<=930;} // 09:15–15:30
+
+// ---------- data fetch ----------
+async function fetchChain(){
+  if(cfg.src==="relay"){
+    if(!cfg.relayUrl)throw new Error("Set a relay URL in Settings.");
+    const u=cfg.relayUrl.replace(/\/+$/,"")+"?key="+encodeURIComponent(cfg.relayKey||"");
+    const r=await fetch(u,{method:"GET",cache:"no-store"});
+    if(!r.ok)throw new Error("Relay HTTP "+r.status);
+    const j=await r.json();
+    if(j.status&&j.status!=="success")throw new Error(j.message||"Relay error");
+    return normRelay(j);
+  }else{
+    return await fetchDirect();
+  }
+}
+function normRelay(j){
+  // expects { spot, expiry, oc:{ "23500":{ce:<oi>,pe:<oi>} , ...} }
+  const oc={};
+  for(const k in j.oc){const s=Math.round(+k);if(!s)continue;oc[s]={ce:+j.oc[k].ce||0,pe:+j.oc[k].pe||0};}
+  return {spot:+j.spot,expiry:j.expiry||"",oc};
+}
+async function fetchDirect(){
+  if(!cfg.dClient||!cfg.dToken)throw new Error("Enter Dhan client ID and token.");
+  const H={"Content-Type":"application/json","Accept":"application/json","access-token":cfg.dToken,"client-id":cfg.dClient};
+  const body={UnderlyingScrip:13,UnderlyingSeg:"IDX_I"};
+  const el=await fetch("https://api.dhan.co/v2/optionchain/expirylist",{method:"POST",headers:H,body:JSON.stringify(body)});
+  const elj=await el.json();const today=istDate();
+  const exp=(elj.data||[]).filter(d=>d>=today).sort()[0]||(elj.data||[])[0];
+  const oc1=await fetch("https://api.dhan.co/v2/optionchain",{method:"POST",headers:H,body:JSON.stringify({...body,Expiry:exp})});
+  const j=await oc1.json();const d=j.data||{};const oc={};
+  for(const k in (d.oc||{})){const s=Math.round(+k);oc[s]={ce:+(d.oc[k].ce&&d.oc[k].ce.oi)||0,pe:+(d.oc[k].pe&&d.oc[k].pe.oi)||0};}
+  return {spot:+d.last_price,expiry:exp,oc};
+}
+
+// ---------- maths ----------
+function strikesOf(oc){return Object.keys(oc).map(Number).sort((a,b)=>a-b);}
+function stepOf(ks){let g=Infinity;for(let i=1;i<ks.length;i++)g=Math.min(g,ks[i]-ks[i-1]);return isFinite(g)?g:NIFTY_STEP_FALLBACK;}
+function atmOf(oc,spot){const ks=strikesOf(oc);let best=ks[0],d=Infinity;for(const k of ks){const x=Math.abs(k-spot);if(x<d){d=x;best=k;}}return best;}
+function band(center,n,step){const a=[];for(let i=-n;i<=n;i++)a.push(center+i*step);return a;}
+function sum(oc,ks,side){let t=0;for(const k of ks){if(oc[k])t+=oc[k][side];}return t;}
+
+function compute(snap){
+  const {oc,spot}=snap;
+  const ks=strikesOf(oc), step=stepOf(ks), curAtm=atmOf(oc,spot), n=cfg.band;
+  // PCR band
+  const pcrCenter=(cfg.pcrMode==="locked"&&day.lockedAtm)?day.lockedAtm:curAtm;
+  const pcrKs=band(pcrCenter,n,step);
+  const pe=sum(oc,pcrKs,"pe"),ce=sum(oc,pcrKs,"ce");
+  const pcr=ce>0?pe/ce:null;
+  // CPCR band (locked strike set if locked, else current)
+  const cpcrKs=day.locked&&day.lockedStrikes?day.lockedStrikes:band(curAtm,n,step);
+  const base=day.baseline;let cpcr=null,dPe=null,dCe=null;
+  if(base){dPe=sum(oc,cpcrKs,"pe")-sum(base.oc,cpcrKs,"pe");dCe=sum(oc,cpcrKs,"ce")-sum(base.oc,cpcrKs,"ce");cpcr=Math.abs(dCe)>1?dPe/dCe:null;}
+  return {curAtm,step,pcr,cpcr,pe,ce,dPe,dCe};
+}
+
+// ---------- baseline logic ----------
+function updateBaseline(p){
+  const key=p.hhmm;
+  if(!day.locked && p.h*60+p.m>=570){ // >=09:30 → lock
+    const s=day.snaps[key]||day.snaps[Object.keys(day.snaps).pop()];
+    if(s){day.baseline=s;day.lockedAtm=atmOf(s.oc,s.spot);day.lockedStrikes=band(day.lockedAtm,cfg.band,stepOf(strikesOf(s.oc)));day.locked=true;day.baseLabel=key+" (locked)";}
+  }else if(!day.locked){ // provisional before 09:30: prefer 09:25 then 09:20
+    const prov=day.snaps["09:25"]||day.snaps["09:20"];
+    if(prov){day.baseline=prov;day.baseLabel=(day.snaps["09:25"]?"09:25":"09:20")+" (prov.)";}
+  }
+}
+
+// ---------- poll ----------
+async function poll(manual){
+  const p=istParts();
+  setStatus("fetching "+p.hhmm+"…");
+  try{
+    const chain=await fetchChain();
+    if(!chain.spot||!Object.keys(chain.oc).length)throw new Error("Empty option chain.");
+    const snap={time:p.hhmm,spot:chain.spot,expiry:chain.expiry,oc:chain.oc};
+    day.snaps[p.hhmm]=snap;
+    if(istDate()!==day.date){resetDay();day.date=istDate();}
+    updateBaseline(p);
+    const c=compute(snap);
+    const row={time:p.hhmm,spot:Math.round(chain.spot*100)/100,atm:c.curAtm,cpcr:c.cpcr,pcr:c.pcr};
+    // replace if same minute, else unshift
+    if(day.rows[0]&&day.rows[0].time===row.time)day.rows[0]=row;else day.rows.unshift(row);
+    if(day.rows.length>120)day.rows.length=120;
+    day.lastExpiry=chain.expiry;
+    save();render(c,snap,true);
+    setStatus("updated "+p.hhmm+" IST");
+  }catch(e){
+    setStatus('<span class="err">'+(e.message||e)+'</span>');
+  }
+}
+
+function resetDay(){day={date:istDate(),rows:[],snaps:{},baseline:null,lockedAtm:null,lockedStrikes:null,locked:false,baseLabel:null,lastExpiry:""};save();render();}
+
+// ---------- render ----------
+function fmt(x,d=2){return x==null||!isFinite(x)?"—":x.toFixed(d);}
+function state(v,lo,hi){if(v==null)return"flat";if(v>=hi)return"bull";if(v<=lo)return"bear";return"flat";}
+
+function render(c,snap,flash){
+  const clk=$("clock"),p=istParts();
+  $("clocktxt").textContent=p.hhmm+" IST";
+  clk.classList.toggle("live",marketOpen(p));
+
+  // heroes
+  $("cpcrVal").textContent=c?fmt(c.cpcr):"—";
+  $("pcrVal").textContent=c?fmt(c.pcr):"—";
+  $("cpcrSub").textContent=(day.locked?"locked 9:30 ATM":"prov. ATM")+" ±"+cfg.band;
+  $("pcrSub").textContent=(cfg.pcrMode==="locked"?"locked ATM":"live ATM")+" ±"+cfg.band;
+
+  if(c){
+    const ps=state(c.pcr,0.7,1.0);
+    setPill("pcrPill",ps,ps==="bull"?"put heavy":ps==="bear"?"call heavy":"balanced");
+    const cs=c.cpcr==null?"flat":state(c.cpcr,0.8,1.2);
+    setPill("cpcrPill",cs,c.cpcr==null?"flat Δ":cs==="bull"?"put adds":cs==="bear"?"call adds":"mixed");
+    // balance bar (PCR band absolute OI)
+    const tot=c.pe+c.ce||1;
+    $("balPe").style.width=(100*c.pe/tot).toFixed(1)+"%";
+    $("balCe").style.width=(100*c.ce/tot).toFixed(1)+"%";
+    $("balPeN").textContent="PE "+kfmt(c.pe);
+    $("balCeN").textContent=kfmt(c.ce)+" CE";
+    if(flash){$("cpcrCard").classList.remove("upd");$("pcrCard").classList.remove("upd");void $("pcrCard").offsetWidth;$("cpcrCard").classList.add("upd");$("pcrCard").classList.add("upd");}
+  }
+  // chips
+  if(snap){$("cSpot").textContent=snap.spot.toFixed(2);$("cExp").textContent=snap.expiry||day.lastExpiry||"—";}
+  $("cAtm").textContent=day.lockedAtm||(c?c.curAtm:"—");
+  $("cBase").textContent=day.baseLabel||"pending 9:30";
+  $("cBaseChip").classList.toggle("warn",!day.locked);
+
+  // table
+  const tb=$("tbody");tb.innerHTML="";
+  for(const r of day.rows){
+    const tr=document.createElement("tr");
+    const cpcrCls=r.cpcr==null?"cpcr":(r.cpcr>=1.2?"up":r.cpcr<=0.8?"down":"cpcr");
+    const pcrCls=r.pcr==null?"":(r.pcr>=1?"up":r.pcr<=0.7?"down":"");
+    tr.innerHTML=`<td>${r.time}</td><td class="num">${r.spot?.toFixed(2)??"—"}</td><td class="num">${r.atm??"—"}</td><td class="num ${cpcrCls}">${fmt(r.cpcr)}</td><td class="num ${pcrCls}">${fmt(r.pcr)}</td>`;
+    tb.appendChild(tr);
+  }
+  $("emptyMsg").style.display=day.rows.length?"none":"block";
+  $("rowCount").textContent=day.rows.length+" mark"+(day.rows.length===1?"":"s");
+  drawSpark();
+}
+function setPill(id,cls,txt){const e=$(id);e.className="pill "+cls;e.textContent=txt;}
+function kfmt(n){return n>=1e7?(n/1e7).toFixed(2)+"Cr":n>=1e5?(n/1e5).toFixed(1)+"L":n>=1e3?(n/1e3).toFixed(0)+"k":String(n);}
+
+function drawSpark(){
+  const svg=$("svg"),W=300,H=90,pad=6;
+  const rows=[...day.rows].slice(0,40).reverse();
+  if(rows.length<2){svg.innerHTML="";$("sparkRange").textContent="";return;}
+  const series=[{key:"cpcr",col:getComputedStyle(document.documentElement).getPropertyValue("--put")},
+                {key:"pcr",col:getComputedStyle(document.documentElement).getPropertyValue("--call")}];
+  let vals=[];rows.forEach(r=>{if(r.cpcr!=null&&isFinite(r.cpcr))vals.push(r.cpcr);if(r.pcr!=null)vals.push(r.pcr);});
+  if(!vals.length){svg.innerHTML="";return;}
+  let mn=Math.min(...vals),mx=Math.max(...vals);if(mn===mx){mn-=0.5;mx+=0.5;}
+  const x=i=>pad+(W-2*pad)*(i/(rows.length-1));
+  const y=v=>H-pad-(H-2*pad)*((v-mn)/(mx-mn));
+  let html=`<line x1="${pad}" x2="${W-pad}" y1="${y(1)}" y2="${y(1)}" stroke="#2A3140" stroke-dasharray="2 3"/>`;
+  for(const s of series){
+    let d="",started=false;
+    rows.forEach((r,i)=>{const v=r[s.key];if(v==null||!isFinite(v))return;d+=(started?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)+" ";started=true;});
+    if(d)html+=`<path d="${d}" fill="none" stroke="${s.col.trim()}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  }
+  svg.innerHTML=html;
+  $("sparkRange").textContent=mn.toFixed(2)+"–"+mx.toFixed(2);
+}
+
+function setStatus(s){$("status").innerHTML=s;}
+
+// ---------- scheduler ----------
+function tick(){
+  const p=istParts();
+  $("clocktxt").textContent=p.hhmm+" IST";
+  $("clock").classList.toggle("live",marketOpen(p));
+  if(marketOpen(p) && p.m%5===0 && p.hhmm!==lastPollMin){
+    lastPollMin=p.hhmm;poll(false);
+  }
+}
+
+// ---------- UI wiring ----------
+function applyCfgToUI(){
+  $("relayUrl").value=cfg.relayUrl;$("relayKey").value=cfg.relayKey;
+  $("dClient").value=cfg.dClient;$("dToken").value=cfg.dToken;
+  $("band").value=cfg.band;
+  document.querySelectorAll("#srcSeg button").forEach(b=>b.classList.toggle("on",b.dataset.src===cfg.src));
+  document.querySelectorAll("#pcrSeg button").forEach(b=>b.classList.toggle("on",b.dataset.mode===cfg.pcrMode));
+  $("relayFields").style.display=cfg.src==="relay"?"block":"none";
+  $("directFields").style.display=cfg.src==="direct"?"block":"none";
+}
+$("srcSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;cfg.src=b.dataset.src;applyCfgToUI();};
+$("pcrSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;cfg.pcrMode=b.dataset.mode;applyCfgToUI();};
+$("btnSave").onclick=()=>{
+  cfg.relayUrl=$("relayUrl").value.trim();cfg.relayKey=$("relayKey").value.trim();
+  cfg.dClient=$("dClient").value.trim();cfg.dToken=$("dToken").value.trim();
+  cfg.band=Math.max(1,Math.min(10,+$("band").value||3));
+  save();$("saveMsg").textContent="Saved. "+(marketOpen()?"":"Market closed — use Refresh now to test.");
+  applyCfgToUI();
+};
+$("btnRefresh").onclick=()=>poll(true);
+$("btnLock").onclick=()=>{const p=istParts();const s=day.snaps[p.hhmm]||Object.values(day.snaps).pop();if(!s){setStatus('<span class="err">No snapshot yet — Refresh first.</span>');return;}day.baseline=s;day.lockedAtm=atmOf(s.oc,s.spot);day.lockedStrikes=band(day.lockedAtm,cfg.band,stepOf(strikesOf(s.oc)));day.locked=true;day.baseLabel=p.hhmm+" (manual)";save();poll(true);};
+$("btnReset").onclick=()=>{if(confirm("Clear today's baseline and tape?")){resetDay();setStatus("session reset");}};
+$("btnCsv").onclick=()=>{
+  const head="time,spot,atm,cpcr,pcr\n";
+  const body=[...day.rows].reverse().map(r=>[r.time,r.spot,r.atm,r.cpcr??"",r.pcr??""].join(",")).join("\n");
+  const blob=new Blob([head+body],{type:"text/csv"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="oitape_"+istDate()+".csv";a.click();
+};
+
+// ---------- installability (single-file manifest) ----------
+(function(){
+  const icon="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%2312151C'/%3E%3Crect x='96' y='150' width='130' height='240' rx='14' fill='%233FB6A8'/%3E%3Crect x='286' y='150' width='130' height='240' rx='14' fill='%23E0A24E'/%3E%3C/svg%3E";
+  const man={name:"OI Tape — NIFTY CPCR/PCR",short_name:"OI Tape",display:"standalone",background_color:"#12151C",theme_color:"#12151C",start_url:".",icons:[{src:icon,sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"}]};
+  const blob=new Blob([JSON.stringify(man)],{type:"application/manifest+json"});
+  const l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(blob);document.head.appendChild(l);
+})();
+
+// ---------- boot ----------
+load();applyCfgToUI();render(null,null,false);
+if(day.rows.length){const last=Object.values(day.snaps).pop();if(last)render(compute(last),last,false);}
+setInterval(tick,1000);tick();
+if((cfg.relayUrl||cfg.src==="direct")&&marketOpen())poll(false);
+setStatus(marketOpen()?"market open · waiting for next 5-min mark":"market closed · open 9:15–15:30 IST Mon–Fri");
+</script>
+</body>
+</html>
